@@ -71,15 +71,7 @@ function component(width, height, color, x, y) {
 
 function updateGameArea() {
     // const collisionRes = myGamePiece.crashWith(myObstacle);
-
-    if (detectCollision(myGamePiece, myObstacle)) {
-
-        rightBtn ? myGamePiece.x += (myGamePiece.x - myObstacle.x) : null;
-        leftBtn ? myGamePiece.x += (myObstacle.x + myObstacle.width - myGamePiece.x) : null;
-        upBtn ? myGamePiece.y += (myObstacle.y + myObstacle.height - myGamePiece.y) : null;
-        downBtn ? myGamePiece.y += (myGamePiece.y - myObstacle.y) : null;
-    }
-
+    handleCollision(myGamePiece, myObstacle);
     myGameArea.clear();
     myObstacle.update();
 
@@ -94,6 +86,27 @@ function updateGameArea() {
     // }
 }
 
+function handleCollision(ob1, ob2) {
+    const leftCollision = ob1.x > (ob2.x - ob1.width) && ob1.x < ob2.x;
+    const rightCollision = ob1.x < (ob2.x + ob2.width) && ob1.x > (ob2.x + ob2.width - ob1.width);
+    const topCollision = ob1.y > (ob2.y - ob1.height) && ob1.y < ob2.y;
+    const bottomCollision = ob1.y < (ob2.y + ob2.height) && ob1.y > (ob2.y + ob2.height - ob1.height);
+
+
+    if (detectCollision(ob1, ob2)) {
+
+        if (ob1.x > (ob2.x - ob1.width) && ob1.x < ob2.x) ob1.x -= (ob1.x + ob1.width - ob2.x);
+        if (ob1.x < (ob2.x + ob2.width) && ob1.x > (ob2.x + ob2.width - ob1.width)) ob1.x += (ob2.x + ob2.width - ob1.x);
+        if (ob1.y > (ob2.y - ob1.height) && ob1.y < ob2.y) ob1.y -= (ob1.y + ob1.height - ob2.y);
+        if (ob1.y < (ob2.y + ob2.height) && ob1.y > (ob2.y + ob2.height - ob1.height)) ob1.y += (ob2.y + ob2.height - ob1.y);
+    
+    }
+
+
+    if (detectCollision(ob1, ob2)) {
+        console.log(detectCollision(ob1, ob2));
+    }
+}
 
 function stopMove() {
     myGamePiece.speedX = 0;
