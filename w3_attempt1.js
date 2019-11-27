@@ -8,7 +8,9 @@
 //// v2
 var myGamePiece;
 // var controller = new Controller();
+var myObstacles = [];
 var myObstacle;
+var myScore;
 
 
 let leftBtn = false;
@@ -20,18 +22,20 @@ let downBtn = false;
 function startGame() {
     myGamePiece = new component(30, 30, "red", 10, 120);
     myObstacle = new component(70, 150, "green", 300, 120);
+    myScore = new component("30px", "Consolas", "black", 280, 40, "text");
     myGameArea.start();
 }
 
 var myGameArea = {
     canvas : document.createElement("canvas"),
     start : function() {
-        this.canvas.width = 800;
-        this.canvas.height = 600;
+        this.canvas.width = 1000;
+        this.canvas.height = 700;
         // this.canvas.style.cursor = "none"; //hide the original cursor
 
         this.context = this.canvas.getContext("2d");
         document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+        this.frameNo = 0;
         this.interval = setInterval(updateGameArea, 20);
         window.addEventListener('mousemove', function (e) {
             // console.log(e)
@@ -50,7 +54,14 @@ var myGameArea = {
     }
 }
 
-function component(width, height, color, x, y) {
+function everyinterval(n) {
+    if ((myGameArea.frameNo / n) % 1 == 0) {return true;}
+    return false;
+}
+
+
+function component(width, height, color, x, y, type) {
+    this.type = type;
     this.width = width;
     this.height = height;
     this.speedX = 0;
@@ -59,52 +70,100 @@ function component(width, height, color, x, y) {
     this.y = y;    
     this.update = function() {
         ctx = myGameArea.context;
-        ctx.fillStyle = color;
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+        if (this.type == "text") {
+            ctx.font = this.width + " " + this.height;
+            ctx.fillStyle = color;
+            ctx.fillText(this.text, this.x, this.y);
+        } else {
+            ctx.fillStyle = color;
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+        }
     }
     this.newPos = function() {
         this.x += this.speedX;
-        this.y += this.speedY;        
+        this.y += this.speedY;
     }
 
 }
 
 function updateGameArea() {
-    // const collisionRes = myGamePiece.crashWith(myObstacle);
     handleCollision(myGamePiece, myObstacle);
     myGameArea.clear();
-    myObstacle.update();
+    myObstacle.x += -1;
+
+
+    var x, y;
+    for (i = 0; i < myObstacles.length; i += 1) {
+        handleCollision(myGamePiece, myObstacles[i]);
+    }
+
+
+    myGameArea.clear();
+    myGameArea.frameNo += 1;
+    
+
+
+
+
+
+    if (myGameArea.frameNo == 1 || everyinterval(150)) {
+        x = myGameArea.canvas.width;
+        minHeight = 20;
+        maxHeight = 200;
+        height = Math.floor(Math.random()*(maxHeight-minHeight+1)+minHeight);
+        minGap = 50;
+        maxGap = 200;
+        gap = Math.floor(Math.random()*(maxGap-minGap+1)+minGap);
+        myObstacles.push(new component(10, height, "green", x, 0));
+        myObstacles.push(new component(10, x - height - gap, "green", x, height + gap));
+      }
+
+
+    // if (myGameArea.frameNo == 1 || everyinterval(150)) {
+    //   x = myGameArea.canvas.width;
+    //   y = myGameArea.canvas.height - 200
+    //   console.log(x, y);
+    //   myObstacles.push(new component(10, 200, "green", x, y));
+    // }
+
+
+
+
+    for (i = 0; i < myObstacles.length; i += 1) {
+        myObstacles[i].x += -1;
+        myObstacles[i].update();
+    }
+
+    for (i = 0; i < myObstacles.length; i += 1) {
+        myObstacles[i].speedX = -1;
+        myObstacles[i].newPos();
+        myObstacles[i].update();
+    }
 
     // VVV Move with mouse
     // if (myGameArea.x && myGameArea.y) {
     //     myGamePiece.x = myGameArea.x;
     //     myGamePiece.y = myGameArea.y;
     // }
+
     //VVV  Move with arrows
+    myObstacle.update();
+
+
+
+    myScore.text = "SCORE: " + myGameArea.frameNo;
+    myScore.update();
     myGamePiece.newPos();    
     myGamePiece.update();
     // }
 }
 
 function handleCollision(ob1, ob2) {
-    const leftCollision = ob1.x > (ob2.x - ob1.width) && ob1.x < ob2.x;
-    const rightCollision = ob1.x < (ob2.x + ob2.width) && ob1.x > (ob2.x + ob2.width - ob1.width);
-    const topCollision = ob1.y > (ob2.y - ob1.height) && ob1.y < ob2.y;
-    const bottomCollision = ob1.y < (ob2.y + ob2.height) && ob1.y > (ob2.y + ob2.height - ob1.height);
-
-
     if (detectCollision(ob1, ob2)) {
-
         if (ob1.x > (ob2.x - ob1.width) && ob1.x < ob2.x) ob1.x -= (ob1.x + ob1.width - ob2.x);
         if (ob1.x < (ob2.x + ob2.width) && ob1.x > (ob2.x + ob2.width - ob1.width)) ob1.x += (ob2.x + ob2.width - ob1.x);
         if (ob1.y > (ob2.y - ob1.height) && ob1.y < ob2.y) ob1.y -= (ob1.y + ob1.height - ob2.y);
         if (ob1.y < (ob2.y + ob2.height) && ob1.y > (ob2.y + ob2.height - ob1.height)) ob1.y += (ob2.y + ob2.height - ob1.y);
-    
-    }
-
-
-    if (detectCollision(ob1, ob2)) {
-        console.log(detectCollision(ob1, ob2));
     }
 }
 
@@ -175,9 +234,6 @@ function checkKeyUp(e) {
 }
 
   
-
-
-
 
 
 
