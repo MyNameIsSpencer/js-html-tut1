@@ -11,6 +11,10 @@ var myGamePiece;
 var myObstacles = [];
 var myObstacle;
 var myScore;
+var myBackground;
+var mySound;
+var myMusic;
+
 
 
 let leftBtn = false;
@@ -20,9 +24,13 @@ let downBtn = false;
 
 
 function startGame() {
-    myGamePiece = new component(30, 30, "red", 10, 120);
+    myGamePiece = new component(30, 30, "smiley.png", 10, 120, "image");
+    myBackground = new component(1000, 700, "citymarket.png", 0, 0, "image");
     myObstacle = new component(70, 150, "green", 300, 120);
     myScore = new component("30px", "Consolas", "black", 280, 40, "text");
+    mySound = new sound("phatbounceexplode.mp3");
+    myMusic = new sound("silver_skyline.mp3");
+    myMusic.play();
     myGameArea.start();
 }
 
@@ -62,6 +70,10 @@ function everyinterval(n) {
 
 function component(width, height, color, x, y, type) {
     this.type = type;
+    if (type == "image" || type == "background") {
+        this.image = new Image();
+        this.image.src = color;
+    }
     this.width = width;
     this.height = height;
     this.speedX = 0;
@@ -70,7 +82,15 @@ function component(width, height, color, x, y, type) {
     this.y = y;    
     this.update = function() {
         ctx = myGameArea.context;
-        if (this.type == "text") {
+        if (type == "image") {
+            ctx.drawImage(this.image,
+                this.x,
+                this.y,
+                this.width, this.height);
+                if (type == "background") {
+                    ctx.drawImage(this.image, this.x + this.width, this.y, this.width, this.height);
+                }
+        } else if (this.type == "text") {
             ctx.font = this.width + " " + this.height;
             ctx.fillStyle = color;
             ctx.fillText(this.text, this.x, this.y);
@@ -86,10 +106,29 @@ function component(width, height, color, x, y, type) {
 
 }
 
+function sound(src) {
+    this.sound = document.createElement("audio");
+    this.sound.src = src;
+    this.sound.setAttribute("preload", "auto");
+    this.sound.setAttribute("controls", "none");
+    this.sound.style.display = "none";
+    document.body.appendChild(this.sound);
+    this.play = function(){
+        this.sound.play();
+    }
+    this.stop = function(){
+        this.sound.pause();
+    }
+}
+
 function updateGameArea() {
     handleCollision(myGamePiece, myObstacle);
     myGameArea.clear();
     myObstacle.x += -1;
+    myBackground.speedX = -1;
+
+
+    // myMusic.play();
 
 
     var x, y;
@@ -102,7 +141,16 @@ function updateGameArea() {
     myGameArea.frameNo += 1;
     
 
-
+    if (this.type == "background") {
+        if (this.x == -(this.width)) {
+          this.x = 0;
+        }
+    }
+    myBackground.newPos();
+    if (myBackground.x == -(myBackground.width)){
+        myBackground.x = 0;
+    }
+    myBackground.update();
 
 
 
@@ -140,6 +188,8 @@ function updateGameArea() {
         myObstacles[i].update();
     }
 
+    
+
     // VVV Move with mouse
     // if (myGameArea.x && myGameArea.y) {
     //     myGamePiece.x = myGameArea.x;
@@ -147,10 +197,8 @@ function updateGameArea() {
     // }
 
     //VVV  Move with arrows
+    
     myObstacle.update();
-
-
-
     myScore.text = "SCORE: " + myGameArea.frameNo;
     myScore.update();
     myGamePiece.newPos();    
@@ -160,6 +208,7 @@ function updateGameArea() {
 
 function handleCollision(ob1, ob2) {
     if (detectCollision(ob1, ob2)) {
+        // mySound.play();
         if (ob1.x > (ob2.x - ob1.width) && ob1.x < ob2.x) ob1.x -= (ob1.x + ob1.width - ob2.x);
         if (ob1.x < (ob2.x + ob2.width) && ob1.x > (ob2.x + ob2.width - ob1.width)) ob1.x += (ob2.x + ob2.width - ob1.x);
         if (ob1.y > (ob2.y - ob1.height) && ob1.y < ob2.y) ob1.y -= (ob1.y + ob1.height - ob2.y);
@@ -193,7 +242,7 @@ document.onkeydown = checkKeyDown;
 document.onkeyup = checkKeyUp;
 
 function checkKeyDown(e) {
-
+    myGamePiece.image.src = "angry.gif";
     if (e.keyCode == '38') {
         upBtn = true;
         myGamePiece.speedY = -10; 
@@ -214,7 +263,7 @@ function checkKeyDown(e) {
 }
 
 function checkKeyUp(e) {
-
+    myGamePiece.image.src = "smiley.png";
     if (e.keyCode == '38') {
         upBtn = false;
         myGamePiece.speedY = 0; 
